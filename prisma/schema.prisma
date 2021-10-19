@@ -1,0 +1,11 @@
+
+//Arquivo de configuração de banco de dados,onde sera configurado o SQLITE
+
+datasource db {
+  provider = "SQLITE"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
