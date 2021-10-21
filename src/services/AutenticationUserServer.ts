@@ -1,6 +1,8 @@
 
- import axios from "axios";
-import { json } from "express";
+import axios from "axios";
+import prismaClient from "../prisma";
+import {sign} from "jsonwebtoken";
+
 
 // Cria uma inteface para sinalizar qual informação vai ser necessario
 interface IAccessTokenResponse{
@@ -42,7 +44,43 @@ class  AuthenticateUserServer{
             },
         });
 
-        return response.data;
+        const { login , id, avatar_url, name} = response.data
+
+        let user = await prismaClient.user.findFirst({
+            //Faz um Select no banco onde  se o github id ja existe,caso não exista um usuario novo sera criado
+            where:{
+                github_id : id
+            }
+        });
+
+        if(!user){
+            //Cria o usuario caso o mesmo não exista
+            await prismaClient.user.create({
+                data: {
+                    github_id : id,
+                    login,
+                    avatar_url,
+                    name,
+                }
+            });
+        }
+
+        // Cria o token do usuario quando a requisição e feita
+        const token = sign ({
+            user: {
+                name : user.name,
+                avatar_url : user.avatar_url,
+                id : user.id
+                },
+            },
+         `${process.env.JWT_SECRET}`,
+            {
+                subject : user.id,
+                expiresIn : "1d" //Coloca a duração do token para um dia
+            }
+        );
+
+        return {token, user};
 
     }
 }

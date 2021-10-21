@@ -1,12 +1,34 @@
+import "dotenv/config";
 
-import "dotenv/config"
-import  express, { json, response }  from "express";
+import  express from "express";
 
 import { router } from "./routes";
+
+import http from "http";
+
+import cors from "cors";
+
+import {Server} from "socket.io"
 
 
 
 const app = express();
+
+app.use(cors());
+
+const serverHttp = http.createServer(app);
+
+// Define quem consegue conectar
+const io = new Server(serverHttp,{
+    cors:{
+        origin: "*"
+    }
+});
+
+io.on("connection",(socket) => {
+    console.log( `Usuario  conectado ao socket ${socket}` )
+})
+
 
 // Informa que sera recebido um json
 app.use(express.json());
@@ -25,4 +47,4 @@ app.get("/signin/callback",(request,response) => {
     return response.json(code); // Retorna o codigo em forma de json na requisição
 })
 
-app.listen (3030,() => console.log("servidor funcionado na porta 3030"))
+export {serverHttp,io}
